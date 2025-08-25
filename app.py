@@ -7,29 +7,59 @@ from reportlab.pdfgen import canvas
 from reportlab.platypus import Table, TableStyle
 from reportlab.lib import colors
 
-# --------------------------
-# 1. Données fictives (exemple Azure Advisor)
-# --------------------------
-data = [
-    ["Cost", "VM sous-utilisée", "Réduire la taille à B2s", "Medium"],
-    ["Security", "Port 3389 ouvert", "Restreindre avec NSG", "High"],
-    ["HighAvailability", "VM sans redondance", "Activer Availability Set", "High"],
-    ["Performance", "Base SQL surdimensionnée", "Réduire DTUs à 50", "Low"],
-]
-
-df = pd.DataFrame(data, columns=["Catégorie", "Problème", "Solution", "Impact"])
+# Azure SDK
+from azure.identity import ClientSecretCredential
+from azure.mgmt.advisor import AdvisorManagementClient
 
 # --------------------------
-# 2. Interface Streamlit
+# 1. Connexion Azure via secrets
 # --------------------------
-st.title("☁️ Azure Advisor – Démo Rapport PDF")
-st.write("Voici un exemple de rapport généré automatiquement à partir de recommandations Azure Advisor (données fictives).")
+tenant_id = st.secrets["AZURE_TENANT_ID"]
+client_id = st.secrets["AZURE_CLIENT_ID"]
+client_secret = st.secrets["AZURE_CLIENT_SECRET"]
+subscription_id = st.secrets["AZURE_SUBSCRIPTION_ID"]
 
-st.subheader("📊 Recommandations (exemple)")
+credential = ClientSecretCredential(
+    tenant_id=tenant_id,
+    client_id=client_id,
+    client_secret=client_secret
+)
+
+client = AdvisorManagementClient(credential, subscription_id)
+
+st.title("☁️ Azure Advisor – Rapport PDF")
+st.write("Cette app récupère vos recommandations Azure Advisor et génère un PDF clair.")
+
+# --------------------------
+# 2. Récupération des recommandations
+# --------------------------
+recs = []
+try:
+    for rec in client.recommendations.list():
+        recs.append([
+            rec.category,
+            rec.short_description.problem,
+            rec.short_description.solution,
+            rec.impact
+        ])
+except Exception as e:
+    st.error(f"Erreur lors de la récupération des recommandations : {e}")
+    st.stop()
+
+if not recs:
+    st.warning("✅ Aucune recommandation trouvée.")
+    st.stop()
+
+df = pd.DataFrame(recs, columns=["Catégorie", "Problème", "Solution", "Impact"])
+
+# --------------------------
+# 3. Affichage tableau
+# --------------------------
+st.subheader("📊 Recommandations Azure Advisor")
 st.dataframe(df)
 
 # --------------------------
-# 3. Graphique matplotlib
+# 4. Graphique matplotlib
 # --------------------------
 fig, ax = plt.subplots()
 df["Catégorie"].value_counts().plot(kind="bar", ax=ax, color="skyblue")
@@ -38,13 +68,13 @@ ax.set_ylabel("Nombre de recommandations")
 st.pyplot(fig)
 
 # --------------------------
-# 4. Génération du PDF
+# 5. Génération PDF
 # --------------------------
 def generate_pdf(dataframe):
     buffer = BytesIO()
     c = canvas.Canvas(buffer, pagesize=A4)
     c.setFont("Helvetica-Bold", 16)
-    c.drawString(150, 800, "Rapport d’optimisation Azure Advisor (Démo)")
+    c.drawString(120, 800, "Rapport d’optimisation Azure Advisor")
 
     # Tableau
     table_data = [["Catégorie", "Problème", "Solution", "Impact"]] + dataframe.values.tolist()
@@ -66,11 +96,11 @@ def generate_pdf(dataframe):
     buffer.seek(0)
     return buffer
 
-# Bouton téléchargement
 pdf_bytes = generate_pdf(df)
+
 st.download_button(
     label="📥 Télécharger le rapport PDF",
     data=pdf_bytes,
-    file_name="azure_advisor_report_demo.pdf",
+    file_name="azure_advisor_report.pdf",
     mime="application/pdf"
 )
