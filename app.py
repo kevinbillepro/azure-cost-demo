@@ -45,13 +45,13 @@ advisor_client = AdvisorManagementClient(credential, subscription_id)
 recs = []
 try:
     for rec in advisor_client.recommendations.list():
-        resource_name = getattr(rec.impacted_value, 'resource_id', 'N/A')  # fallback si pas dispo
+        resource_group = getattr(getattr(rec, "resource_metadata", None), "resource_group", None)
         recs.append([
             rec.category,
             rec.short_description.problem,
             rec.short_description.solution,
             rec.impact,
-            resource_name
+            resource_group
         ])
 except Exception as e:
     st.error(f"Erreur lors de la récupération des recommandations : {e}")
