@@ -49,7 +49,8 @@ try:
             rec.category,
             rec.short_description.problem,
             rec.short_description.solution,
-            rec.impact
+            rec.impact,
+            resource_name
         ])
 except Exception as e:
     st.error(f"Erreur lors de la récupération des recommandations : {e}")
@@ -59,7 +60,7 @@ if not recs:
     st.warning("✅ Aucune recommandation trouvée pour cette subscription.")
     st.stop()
 
-df = pd.DataFrame(recs, columns=["Catégorie", "Problème", "Solution", "Impact"])
+df = pd.DataFrame(recs, columns=["Catégorie", "Problème", "Solution", "Impact", "Resource"])
 
 # --------------------------
 # 3. Affichage tableau
