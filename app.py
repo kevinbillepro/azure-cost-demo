@@ -11,20 +11,30 @@ from reportlab.lib import colors
 
 st.title("Azure Advisor – Multi-subscriptions avec Resource Group")
 
-# 🔑 Inputs pour l’authentification
-tenant_id = st.text_input("Tenant ID")
-client_id = st.text_input("Client ID (App ID)")
-client_secret = st.text_input("Client Secret", type="password")
-subs_input = st.text_area("Liste des Subscription IDs (une par ligne)")
+# 1. Connexion Azure via secrets
+# --------------------------
+tenant_id = st.secrets["AZURE_TENANT_ID"]
+client_id = st.secrets["AZURE_CLIENT_ID"]
+client_secret = st.secrets["AZURE_CLIENT_SECRET"]
 
-if st.button("Analyser les recommandations"):
-    try:
-        if not tenant_id or not client_id or not client_secret or not subs_input:
-            st.error("Veuillez remplir tous les champs")
-        else:
-            # 🔐 Connexion Azure AD
-            credential = ClientSecretCredential(tenant_id=tenant_id, client_id=client_id, client_secret=client_secret)
+credential = ClientSecretCredential(
+    tenant_id=tenant_id,
+    client_id=client_id,
+    client_secret=client_secret
+)
 
+# Récupérer toutes les subscriptions accessibles
+sub_client = SubscriptionClient(credential)
+subscriptions = list(sub_client.subscriptions.list())
+
+subscription_dict = {sub.display_name: sub.subscription_id for sub in subscriptions}
+
+st.title("☁️ Azure Advisor – Multi-Subscription PDF")
+st.write("Sélectionnez une subscription et générez un rapport PDF avec les recommandations Azure Advisor.")
+
+# Dropdown pour choisir la subscription
+selected_name = st.selectbox("Choisir une subscription :", list(subscription_dict.keys()))
+subscription_id = subscription_dict[selected_name]
             all_recs = []
 
             # 🔄 Boucle sur chaque subscription
