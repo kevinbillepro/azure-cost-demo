@@ -60,7 +60,7 @@ if not recs:
     st.warning("✅ Aucune recommandation trouvée pour cette subscription.")
     st.stop()
 
-df = pd.DataFrame(recs, columns=["Catégorie", "Problème", "Solution", "Impact", "Resource"])
+df = pd.DataFrame(recs, columns=["Catégorie", "Problème", "Solution", "Impact"])
 
 # --------------------------
 # 3. Affichage tableau
