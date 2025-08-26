@@ -45,17 +45,11 @@ advisor_client = AdvisorManagementClient(credential, subscription_id)
 recs = []
 try:
     for rec in advisor_client.recommendations.list():
-       resource_group = getattr(getattr(rec, "resource_metadata", None), "resource_group", None)
-    
-    # Fallback si absent
-    if not resource_group:
-        resource_group = "N/A"
         recs.append([
             rec.category,
             rec.short_description.problem,
             rec.short_description.solution,
             rec.impact,
-            resource_metadata
         ])
 except Exception as e:
     st.error(f"Erreur lors de la récupération des recommandations : {e}")
@@ -65,7 +59,7 @@ if not recs:
     st.warning("✅ Aucune recommandation trouvée pour cette subscription.")
     st.stop()
 
-df = pd.DataFrame(recs, columns=["Catégorie", "Problème", "Solution", "Impact","Resource Group"])
+df = pd.DataFrame(recs, columns=["Catégorie", "Problème", "Solution", "Impact"])
 
 # --------------------------
 # 3. Affichage tableau
