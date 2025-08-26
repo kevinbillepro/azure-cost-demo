@@ -45,11 +45,7 @@ advisor_client = AdvisorManagementClient(credential, subscription_id)
 recs = []
 try:
     for rec in advisor_client.recommendations.list():
-        resource_id = getattr(getattr(rec, "resource_metadata", None), "resource_id", None)
-    
-    # Si rien, fallback sur impacted_value
-    if not resource_id:
-        resource_id = getattr(getattr(rec, "impacted_value", None), "resource_id", "N/A")
+       
         recs.append([
             rec.category,
             rec.short_description.problem,
