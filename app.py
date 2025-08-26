@@ -50,8 +50,7 @@ try:
             rec.category,
             rec.short_description.problem,
             rec.short_description.solution,
-            rec.impact,
-            resource_id
+            rec.impact           
         ])
 except Exception as e:
     st.error(f"Erreur lors de la récupération des recommandations : {e}")
